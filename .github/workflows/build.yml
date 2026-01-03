@@ -1,0 +1,64 @@
+name: Build Package
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+env:
+  SDK_URL: https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+  CACHE_KEY: openwrt-sdk-23.05.3
+  PKG_NAME: "luci-app-connected"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: sdk
+          key: "${{ env.CACHE_KEY }}"
+
+      - name: Setup OpenWrt SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        run: |
+          wget -qO - "$SDK_URL" | tar -Jxf -
+          mv openwrt-sdk-* sdk
+
+      - name: Prepare Package
+        run: |
+          mkdir -p sdk/package/${{ env.PKG_NAME }}
+          rsync -av --delete --delete-excluded --include 'Makefile' --include='usr/' --include='usr/**' --exclude '*' ./ sdk/package/${{ env.PKG_NAME }}/
+
+      - name: Compile
+        run: |
+          cd sdk
+          make defconfig
+          make package/${{ env.PKG_NAME }}/compile V=s -j$(nproc)
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p output
+          find sdk/bin/packages -name "${{ env.PKG_NAME }}_*.ipk" -exec cp {} output/${{ env.PKG_NAME }}.ipk \;
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG_NAME }}
+          path: output/*.ipk
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: output/*.ipk
