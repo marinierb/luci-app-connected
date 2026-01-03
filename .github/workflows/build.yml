@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: sdk
-          key: "${{ env.CACHE_KEY }}"
+          key: ${{ runner.os }}-${{ env.CACHE_KEY }}
 
       - name: Setup OpenWrt SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
