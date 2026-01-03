@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "options": {
+        "env": {
+            "RSYNC_CMD": "rsync -avz --progress",
+            "CONNECTED_SRC": "${workspaceFolder}/usr/lib/lua/luci/",
+            "CONNECTED_DST": "root@192.168.1.1:/usr/lib/lua/luci/",
+            "CONNECTED_PST": "brave http://192.168.1.1/cgi-bin/luci/admin/status/connected",
+        }
+    },
+    "tasks": [
+        {
+            "label" : "$(arrow-right) Deploy connected",
+            "type": "shell",
+            "command": "$RSYNC_CMD $CONNECTED_SRC $CONNECTED_DST && $CONNECTED_PST",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "statusbar": {
+                    "color" : "#226dd6"
+                }
+            }
+        }
+    ]
+}
