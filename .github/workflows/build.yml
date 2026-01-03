@@ -8,7 +8,6 @@ on:
 
 env:
   SDK_URL: https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-  CACHE_KEY: openwrt-sdk-23.05.3
   PKG_NAME: "luci-app-connected"
 
 permissions:
@@ -27,7 +26,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: sdk
-          key: ${{ runner.os }}-${{ env.CACHE_KEY }}
+          key: sdk
+          restore-keys: sdk
 
       - name: Setup OpenWrt SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
