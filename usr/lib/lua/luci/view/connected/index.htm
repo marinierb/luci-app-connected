@@ -25,11 +25,6 @@ local function ip_compare(a, b)
     return false
 end
 
--- Reverse DNS lookup for hostname
-local function get_hostname(ip)
-    return nixio.getnameinfo(ip) or ""
-end
-
 -- Parse ip neigh and group by interface
 local device_clients = {}
 local output = sys.exec("ip -4 neigh show")
@@ -43,7 +38,7 @@ for line in output:gmatch("[^\r\n]+") do
         table.insert(device_clients[device], {
             ip = ip,
             mac = mac or "",
-            hostname = get_hostname(ip),
+            hostname = nixio.getnameinfo(ip) or "",
             state = state,
         })
     end
