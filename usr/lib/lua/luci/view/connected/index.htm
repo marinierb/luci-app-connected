@@ -2,7 +2,7 @@
 
 local sys = require "luci.sys"
 local util = require "luci.util"
-local uci = require "luci.model.uci".cursor()
+local nixio = require "nixio"
 
 -- Handle ARP flush button
 if luci.http.formvalue("flush_arp") then
@@ -27,26 +27,26 @@ end
 
 -- Reverse DNS lookup for hostname
 local function get_hostname(ip)
-    local result = sys.exec("nslookup " .. ip .. " 127.0.0.1 2>/dev/null")
-    local name = result:match("name%s*=%s*(%S+)")
-    return name and name:gsub("%.$", "") or ""
+    return nixio.getnameinfo(ip) or ""
 end
 
 -- Parse ip neigh and group by interface
 local device_clients = {}
-local output = sys.exec("ip -4 neigh show | grep -v 'FAILED'")
+local output = sys.exec("ip -4 neigh show")
 for line in output:gmatch("[^\r\n]+") do
-    local ip = line:match("(%d+%.%d+%.%d+%.%d+)")
-    local mac = line:match("lladdr%s([%x:]+)")
-    local state = line:match("%s(%u+)$")
-    local device = line:match("dev%s([%w%d%-_]+)")
-    if not device_clients[device] then device_clients[device] = {} end
-    table.insert(device_clients[device], {
-        ip = ip,
-        mac = mac or "",
-        hostname = get_hostname(ip),
-        state = state,
-    })
+    if not line:match("FAILED") then
+        local ip = line:match("(%d+%.%d+%.%d+%.%d+)")
+        local mac = line:match("lladdr%s([%x:]+)")
+        local state = line:match("%s(%u+)$")
+        local device = line:match("dev%s([%w%d%-_]+)")
+        if not device_clients[device] then device_clients[device] = {} end
+        table.insert(device_clients[device], {
+            ip = ip,
+            mac = mac or "",
+            hostname = get_hostname(ip),
+            state = state,
+        })
+    end
 end
 for _, clients in pairs(device_clients) do
     table.sort(clients, function(a, b)
