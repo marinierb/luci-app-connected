@@ -28,6 +28,7 @@ jobs:
         with:
           path: sdk
           key: "${{ env.CACHE_KEY }}"
+          restore-keys: "${{ env.CACHE_KEY }}"
 
       - name: Setup OpenWrt SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
