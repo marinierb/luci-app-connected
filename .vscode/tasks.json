@@ -29,7 +29,7 @@
         {
             "label": "$(arrow-right) Create and Push Tag",
             "type": "shell",
-            "command": "TAG=$(grep -E '^(PKG_VERSION|PKG_RELEASE)' Makefile | awk -F ':=' '{print $2}' | tr -d ' ' | tr '\n' '-') && TAG=${TAG%-} && git tag $TAG && git push origin $TAG",
+            "command": "TAG=$(grep -E '^(PKG_VERSION|PKG_RELEASE)' Makefile | awk -F ':=' '{print $2}' | tr -d ' ' | tr '\n' '-') && TAG=v${TAG%-} && git tag $TAG && git push origin $TAG",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
