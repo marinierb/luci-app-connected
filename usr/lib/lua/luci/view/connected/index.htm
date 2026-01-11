@@ -32,14 +32,14 @@ for line in output:gmatch("[^\r\n]+") do
     if not line:match("FAILED") then
         local ip = line:match("(%d+%.%d+%.%d+%.%d+)")
         local mac = line:match("lladdr%s([%x:]+)")
-        local state = line:match("%s(%u+)$")
+        local state = line:match("%s(%u+)%s*$")
         local device = line:match("dev%s([%w%d%-_]+)")
         if not device_clients[device] then device_clients[device] = {} end
         table.insert(device_clients[device], {
             ip = ip,
             mac = mac or "",
-            hostname = nixio.getnameinfo(ip) or "",
-            state = state,
+            hostname = nixio.getnameinfo(ip):gsub("%.home%.arpa$", "") or "",
+            state = state or "",
         })
     end
 end
@@ -76,8 +76,8 @@ end
         <tr class="tr">
             <td class="td"><%=lease.ip%></td>
             <td class="td"><%=lease.mac%></td>
-            <td class="td"><%=lease.hostname:gsub("%.home%.arpa$", "")%></td>
-            <td class="td"><%=lease.state or ""%></td>
+            <td class="td"><%=lease.hostname%></td>
+            <td class="td"><%=lease.state%></td>
         </tr>
         <% end %>
     </table>
