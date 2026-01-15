@@ -29,20 +29,23 @@ end
 local device_clients = {}
 local output = sys.exec("ip -4 neigh show")
 for line in output:gmatch("[^\r\n]+") do
-    if not line:match("FAILED") then
+    if not line:match("FAILED") and not line:match("INCOMPLETE") then
         local ip = line:match("(%d+%.%d+%.%d+%.%d+)")
         local mac = line:match("lladdr%s([%x:]+)")
         local state = line:match("%s(%u+)%s*$")
         local device = line:match("dev%s([%w%d%-_]+)")
-        if not device_clients[device] then device_clients[device] = {} end
-        table.insert(device_clients[device], {
-            ip = ip,
-            mac = mac or "",
-            hostname = nixio.getnameinfo(ip):gsub("%.home%.arpa$", "") or "",
-            state = state or "",
-        })
+        if ip and device then
+            if not device_clients[device] then device_clients[device] = {} end
+            table.insert(device_clients[device], {
+                ip = ip,
+                mac = mac or "",
+                hostname = nixio.getnameinfo(ip):gsub("%.home%.arpa$", "") or "",
+                state = state or "",
+            })
+        end
     end
 end
+
 for _, clients in pairs(device_clients) do
     table.sort(clients, function(a, b)
         if type(a.ip) ~= "string" or type(b.ip) ~= "string" then
