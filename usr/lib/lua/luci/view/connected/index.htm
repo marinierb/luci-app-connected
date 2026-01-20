@@ -27,10 +27,12 @@ end
 
 -- Parse ip neigh and group by interface
 local device_clients = {}
-local output = sys.exec("ip -4 neigh show")
+local output = sys.exec("ip -4 neigh show | grep -v FAILED")
 for line in output:gmatch("[^\r\n]+") do
     if not line:match("FAILED") and not line:match("INCOMPLETE") then
         local ip = line:match("(%d+%.%d+%.%d+%.%d+)")
+        local hostname = nixio.getnameinfo(ip)
+        if hostname then hostname = hostname:gsub("%.home%.arpa$", "") end
         local mac = line:match("lladdr%s([%x:]+)")
         local state = line:match("%s(%u+)%s*$")
         local device = line:match("dev%s([%w%d%-_]+)")
@@ -39,7 +41,7 @@ for line in output:gmatch("[^\r\n]+") do
             table.insert(device_clients[device], {
                 ip = ip,
                 mac = mac or "",
-                hostname = nixio.getnameinfo(ip):gsub("%.home%.arpa$", "") or "",
+                hostname = hostname or "",
                 state = state or "",
             })
         end
