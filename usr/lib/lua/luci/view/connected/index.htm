@@ -1,91 +1,35 @@
-<%
-
-local sys = require "luci.sys"
-local util = require "luci.util"
-local nixio = require "nixio"
-
--- Handle ARP flush button
-if luci.http.formvalue("flush_arp") then
-    sys.exec("ip -4 neigh flush all >/dev/null 2>&1")
-    luci.http.redirect(luci.http.getenv("REQUEST_URI") or luci.dispatcher.build_url())
-    return
-end
-
--- Numeric IP sort
-local function ip_compare(a, b)
-    local a_parts = util.split(a, ".")
-    local b_parts = util.split(b, ".")
-    for i = 1, 4 do
-        local a_num = tonumber(a_parts[i]) or 0
-        local b_num = tonumber(b_parts[i]) or 0
-        if a_num ~= b_num then
-            return a_num < b_num
-        end
-    end
-    return false
-end
-
--- Parse ip neigh and group by interface
-local device_clients = {}
-local output = sys.exec("ip -4 neigh show | grep -v FAILED")
-for line in output:gmatch("[^\r\n]+") do
-    if not line:match("FAILED") and not line:match("INCOMPLETE") then
-        local ip = line:match("(%d+%.%d+%.%d+%.%d+)")
-        local hostname = nixio.getnameinfo(ip)
-        if hostname then hostname = hostname:gsub("%.home%.arpa$", "") end
-        local mac = line:match("lladdr%s([%x:]+)")
-        local state = line:match("%s(%u+)%s*$")
-        local device = line:match("dev%s([%w%d%-_]+)")
-        if ip and device then
-            if not device_clients[device] then device_clients[device] = {} end
-            table.insert(device_clients[device], {
-                ip = ip,
-                mac = mac or "",
-                hostname = hostname or "",
-                state = state or "",
-            })
-        end
-    end
-end
-
-for _, clients in pairs(device_clients) do
-    table.sort(clients, function(a, b)
-        if type(a.ip) ~= "string" or type(b.ip) ~= "string" then
-            return tostring(a.ip) < tostring(b.ip)
-        end
-        return ip_compare(a.ip, b.ip)
-    end)
-end
-%>
-
 <%+header%>
 
 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1em;">
     <h2 style="margin: 0;"><%:Connected%></h2>
-    <form method="post" style="margin: 0;">
-        <button type="submit" name="flush_arp" value="1" class="btn"><%:Flush ARP Table%></button>
+    <form method="post" action="/cgi-bin/luci/admin/status/connected/clear_arp" style="margin: 0;">
+        <button type="submit" class="btn"><%:Clear ARP Cache%></button>
     </form>
 </div>
 
 <div class="cbi-section">
-    <% for device, clients in pairs(device_clients) do %>
-    <h3><%=device%> - <%=#clients%> <%:client(s)%></h3>
-    <table class="table cbi-section-table">
-        <tr class="tr table-titles">
-            <th class="th"><%:IP Address%></th>
-            <th class="th"><%:MAC Address%></th>
-            <th class="th"><%:Hostname%></th>
-            <th class="th"><%:State%></th>
-        </tr>
-        <% for _, lease in ipairs(clients) do %>
-        <tr class="tr">
-            <td class="td"><%=lease.ip%></td>
-            <td class="td"><%=lease.mac%></td>
-            <td class="td"><%=lease.hostname%></td>
-            <td class="td"><%=lease.state%></td>
-        </tr>
+    <% if next(devices) then %>
+        <% for device, clients in pairs(devices) do %>
+            <h3><%= device %> - <%= #clients %> <%:client(s)%></h3>
+            <table class="table cbi-section-table">
+                <tr class="tr table-titles">
+                    <th class="th"><%:IP Address%></th>
+                    <th class="th"><%:MAC Address%></th>
+                    <th class="th"><%:Hostname%></th>
+                    <th class="th"><%:State%></th>
+                </tr>
+                <% for _, client in ipairs(clients) do %>
+                    <tr class="tr">
+                        <td class="td"><%= client.ip %></td>
+                        <td class="td"><%= client.mac %></td>
+                        <td class="td"><%= client.hostname %></td>
+                        <td class="td"><%= client.state %></td>
+                    </tr>
+                <% end %>
+            </table>
         <% end %>
-    </table>
+    <% else %>
+        <p><%:No connected devices found.%></p>
     <% end %>
 </div>
 
