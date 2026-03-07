@@ -4,7 +4,7 @@ View list of connected devices on OpenWrt using **ip -4 neigh** (so IPv4 only!)
 
 Augmented with hostnames from reverse DNS lookup.
 
-<img src="screenshots/connected.png" alt="Connected Devices" style="border: 1px solid #333" width="80%">
+<img src="screenshots/connected.png" alt="Connected Devices" style="border: 2px solid #333" width="80%">
 
 ## Important
 
@@ -12,13 +12,11 @@ Version 2 is stricly for OpenWrt 25. Previous versions are for OpenWrt 24 and ar
 
 ## Install
 
-ssh into the router and run:
-
 ##### On OpenWrt 25
 
 ```bash
 wget -O luci-app-connected.apk https://github.com/marinierb/luci-app-connected/releases/latest/download/luci-app-connected.apk
-opkg install --allow-untrusted luci-app-connected.apk
+apk add --allow-untrusted luci-app-connected.apk
 ```
 
 ##### On OpenWrt 24
