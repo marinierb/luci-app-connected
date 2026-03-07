@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get install -y zstd rsync
+        run: sudo apt-get install -y zstd rsync lua5.1
 
       - name: Set SDK URL
         run: |
