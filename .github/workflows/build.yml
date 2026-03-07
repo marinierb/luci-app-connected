@@ -40,6 +40,7 @@ jobs:
           ARCH: ${{ matrix.arch }}-25.12.0
           FEEDNAME: packages_ci
           PACKAGES: ${{ env.PKG_NAME }}
+          EXTRA_FEEDS: "src-link packages_ci ${{ github.workspace }}"
           NO_REFRESH_CHECK: true
           V: s
 
