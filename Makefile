@@ -1,35 +1,40 @@
-# makefile for luci-app-connected
-
 include $(TOPDIR)/rules.mk
+
 PKG_NAME:=luci-app-connected
-PKG_VERSION:=1.0.6
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=1
+PKG_LICENSE:=MIT
+PKG_MAINTAINER:=
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+LUCI_PACKAGE:=luci-app-connected
+LUCI_TITLE:=Connected Devices Viewer
+LUCI_DEPENDS:=+luci-base +rpcd +ucode +ucode-mod-resolv
+LUCI_PKGARCH:=all
 
-include $(INCLUDE_DIR)/package.mk
-
-define Package/$(PKG_NAME)
-  SECTION:=luci
-  CATEGORY:=LuCI
-  TITLE:=Connected Devices Viewer
-  DEPENDS:=+luci-base
-  PKGARCH:=all
-endef
-
-define Package/$(PKG_NAME)/description
-  A LuCI application to view connected devices on OpenWrt.
-endef
-
-define Build/Compile
-endef
+include $(TOPDIR)/feeds/luci/luci.mk
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-	$(INSTALL_DATA) usr/lib/lua/luci/controller/connected.lua $(1)/usr/lib/lua/luci/controller/
+	$(INSTALL_DIR) $(1)/usr/share/rpcd/ucode
+	$(INSTALL_DATA) ./root/usr/share/rpcd/ucode/luci.connected \
+		$(1)/usr/share/rpcd/ucode/luci.connected
 
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/connected
-	$(INSTALL_DATA) usr/lib/lua/luci/view/connected/index.htm $(1)/usr/lib/lua/luci/view/connected/
+	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
+	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-connected.json \
+		$(1)/usr/share/rpcd/acl.d/luci-app-connected.json
+
+	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
+	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-connected.json \
+		$(1)/usr/share/luci/menu.d/luci-app-connected.json
+
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/connected
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/connected/index.js \
+		$(1)/www/luci-static/resources/view/connected/index.js
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+[ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd restart || true
+endef
+
+# call BuildPackage - OpenWrt buildroot signature
 $(eval $(call BuildPackage,$(PKG_NAME)))
