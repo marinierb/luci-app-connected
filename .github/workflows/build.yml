@@ -7,8 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  TARGET: x86/64
-  OPENWRT_VERSION: 25.12.0
   PKG_NAME: luci-app-connected
 
 permissions:
@@ -16,93 +14,49 @@ permissions:
 
 jobs:
   build:
+    name: Build ${{ matrix.arch }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86-64
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get install -y zstd rsync lua5.1
-
-      - name: Set SDK URL
-        run: |
-          SLUG=$(echo "$TARGET" | tr '/' '-')
-          echo "SDK_URL=https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/openwrt-sdk-${OPENWRT_VERSION}-${SLUG}_gcc-14.3.0_musl.Linux-x86_64.tar.zst" >> $GITHUB_ENV
-
-      - name: Cache SDK
-        id: cache-sdk
-        uses: actions/cache@v4
-        with:
-          path: sdk
-          key: openwrt-sdk-${{ env.OPENWRT_VERSION }}-${{ env.TARGET }}
-
-      - name: Download SDK
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
-        run: |
-          wget -qO sdk.tar.zst "$SDK_URL"
-          tar --zstd -xf sdk.tar.zst
-          mv openwrt-sdk-* sdk
-          rm sdk.tar.zst
-
-      - name: Cache Feeds
-        id: cache-feeds
-        uses: actions/cache@v4
-        with:
-          path: sdk/feeds
-          key: openwrt-feeds-${{ env.OPENWRT_VERSION }}-${{ hashFiles('sdk/feeds.conf.default') }}
-
-      - name: Update Feeds
-        if: steps.cache-feeds.outputs.cache-hit != 'true'
-        run: |
-          cd sdk
-          ./scripts/feeds update luci
-          ./scripts/feeds install luci
-
-      - name: Prepare Package
-        run: |
-          mkdir -p sdk/package/${{ env.PKG_NAME }}
-          rsync -a --delete \
-            --include='Makefile' \
-            --include='htdocs/' \
-            --include='htdocs/**' \
-            --include='root/' \
-            --include='root/**' \
-            --exclude='*' \
-            ./ sdk/package/${{ env.PKG_NAME }}/
-
-      - name: Compile
-        run: |
-          cd sdk
-          make defconfig
-          echo "CONFIG_LUCI_JSMIN=n" >> .config
-          make package/feeds/luci/luci-base/compile V=s -j$(nproc)
-          make package/${{ env.PKG_NAME }}/compile V=s -j$(nproc)
-
-      - name: Collect Artifact
-        run: |
-          mkdir -p output
-          APK=$(find sdk/bin/packages -name "${{ env.PKG_NAME }}_*.apk" | head -1)
-          if [ -z "$APK" ]; then
-            echo "ERROR: No .apk found after build" >&2
-            exit 1
-          fi
-          cp "$APK" output/${{ env.PKG_NAME }}.apk
-          echo "Built: $APK"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.PKG_NAME }}
-          path: output/*.apk
-
       - name: Get Package Version
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           PKG_VERSION=$(grep '^PKG_VERSION' Makefile | cut -d= -f2 | tr -d ' ')
           PKG_RELEASE=$(grep '^PKG_RELEASE' Makefile | cut -d= -f2 | tr -d ' ')
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
+
+      - name: Build
+        uses: openwrt/gh-action-sdk@v7
+        env:
+          ARCH: ${{ matrix.arch }}-25.12.0
+          FEEDNAME: packages_ci
+          PACKAGES: ${{ env.PKG_NAME }}
+          NO_REFRESH_CHECK: true
+          V: s
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p output
+          cp bin/packages/${{ matrix.arch }}/packages_ci/*.apk output/ || true
+          if [ -z "$(ls output/*.apk 2>/dev/null)" ]; then
+            echo "ERROR: No .apk found after build" >&2
+            exit 1
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG_NAME }}-${{ matrix.arch }}
+          path: output/*.apk
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
