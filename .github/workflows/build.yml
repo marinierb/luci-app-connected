@@ -34,13 +34,19 @@ jobs:
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
 
+      - name: Prepare feed structure
+        run: |
+          mkdir -p ${{ env.PKG_NAME }}
+          cp Makefile ${{ env.PKG_NAME }}/
+          cp -r htdocs ${{ env.PKG_NAME }}/
+          cp -r root ${{ env.PKG_NAME }}/
+
       - name: Build
         uses: openwrt/gh-action-sdk@v7
         env:
           ARCH: ${{ matrix.arch }}-25.12.0
           FEEDNAME: packages_ci
           PACKAGES: ${{ env.PKG_NAME }}
-          EXTRA_FEEDS: "src-link|packages_ci|${{ github.workspace }}"
           NO_REFRESH_CHECK: true
           V: s
 
