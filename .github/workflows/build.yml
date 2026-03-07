@@ -75,6 +75,8 @@ jobs:
         run: |
           cd sdk
           make defconfig
+          echo "CONFIG_LUCI_JSMIN=n" >> .config
+          make package/feeds/luci/luci-base/compile V=s -j$(nproc)
           make package/${{ env.PKG_NAME }}/compile V=s -j$(nproc)
 
       - name: Collect Artifact
