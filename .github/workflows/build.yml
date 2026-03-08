@@ -34,17 +34,18 @@ jobs:
         uses: openwrt/gh-action-sdk@v7
         env:
           ARCH: ${{ matrix.arch }}-25.12.0
+          PACKAGES: luci-app-connected
           V: s
 
       - name: Store packages
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.arch }}-packages
-          path: bin/packages/${{ matrix.arch }}/packages/*.apk
+          path: bin/packages/${{ matrix.arch }}/action/*.apk
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: "luci-app-connected ${{ env.PKG_VERSION }}-${{ env.PKG_RELEASE }}"
-          files: bin/packages/${{ matrix.arch }}/packages/*.apk
+          files: bin/packages/${{ matrix.arch }}/action/*.apk
