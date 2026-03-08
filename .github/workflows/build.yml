@@ -29,19 +29,10 @@ jobs:
 
       - name: Get Package Version
         run: |
-          PKG_VERSION=$(grep '^PKG_VERSION' Makefile | cut -d= -f2 | tr -d ' ')
-          PKG_RELEASE=$(grep '^PKG_RELEASE' Makefile | cut -d= -f2 | tr -d ' ')
+          PKG_VERSION=$(grep '^PKG_VERSION' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
+          PKG_RELEASE=$(grep '^PKG_RELEASE' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
-
-      - name: Prepare feed structure
-        run: |
-          mkdir -p ${{ env.PKG_NAME }}
-          cp Makefile ${{ env.PKG_NAME }}/
-          cp -r htdocs ${{ env.PKG_NAME }}/
-          cp -r root ${{ env.PKG_NAME }}/
-          echo "Feed structure:"
-          find ${{ env.PKG_NAME }} -maxdepth 3
 
       - name: Build
         uses: openwrt/gh-action-sdk@v7
