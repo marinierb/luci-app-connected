@@ -14,8 +14,10 @@ Version 2 is stricly for OpenWrt 25. Previous versions are for OpenWrt 24 and ar
 
 ##### On OpenWrt 25
 
+Example - for v2.0.0-r1
+
 ```bash
-wget -O luci-app-connected.apk https://github.com/marinierb/luci-app-connected/releases/latest/download/luci-app-connected.apk
+wget -O luci-app-connected.apk https://github.com/marinierb/luci-app-connected/releases/download/v2.0.0/luci-app-connected-2.0.0-r1.apk
 apk add --allow-untrusted luci-app-connected.apk
 ```
 
