@@ -40,6 +40,8 @@ jobs:
           cp Makefile ${{ env.PKG_NAME }}/
           cp -r htdocs ${{ env.PKG_NAME }}/
           cp -r root ${{ env.PKG_NAME }}/
+          echo "Feed structure:"
+          find ${{ env.PKG_NAME }} -maxdepth 3
 
       - name: Build
         uses: openwrt/gh-action-sdk@v7
