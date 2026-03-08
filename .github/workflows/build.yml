@@ -6,31 +6,27 @@ on:
       - '*'
   workflow_dispatch:
 
-env:
-  PKG_NAME: luci-app-connected
-
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build ${{ matrix.arch }}
+    name: ${{ matrix.arch }} build
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        include:
-          - arch: x86_64
-            target: x86-64
+        arch:
+          - x86_64
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get Package Version
         run: |
-          PKG_VERSION=$(grep '^PKG_VERSION' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
-          PKG_RELEASE=$(grep '^PKG_RELEASE' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
+          PKG_VERSION=$(grep '^PKG_VERSION' luci-app-connected/Makefile | cut -d= -f2 | tr -d ' ')
+          PKG_RELEASE=$(grep '^PKG_RELEASE' luci-app-connected/Makefile | cut -d= -f2 | tr -d ' ')
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
 
@@ -38,29 +34,17 @@ jobs:
         uses: openwrt/gh-action-sdk@v7
         env:
           ARCH: ${{ matrix.arch }}-25.12.0
-          FEEDNAME: packages_ci
-          PACKAGES: ${{ env.PKG_NAME }}
-          NO_REFRESH_CHECK: true
           V: s
 
-      - name: Collect artifacts
-        run: |
-          mkdir -p output
-          cp bin/packages/${{ matrix.arch }}/packages_ci/*.apk output/ || true
-          if [ -z "$(ls output/*.apk 2>/dev/null)" ]; then
-            echo "ERROR: No .apk found after build" >&2
-            exit 1
-          fi
-
-      - name: Upload artifacts
+      - name: Store packages
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PKG_NAME }}-${{ matrix.arch }}
-          path: output/*.apk
+          name: ${{ matrix.arch }}-packages
+          path: bin/packages/${{ matrix.arch }}/packages/*.apk
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          name: "${{ env.PKG_NAME }} ${{ env.PKG_VERSION }}-${{ env.PKG_RELEASE }}"
-          files: output/*.apk
+          name: "luci-app-connected ${{ env.PKG_VERSION }}-${{ env.PKG_RELEASE }}"
+          files: bin/packages/${{ matrix.arch }}/packages/*.apk
