@@ -43,9 +43,15 @@ jobs:
           name: ${{ matrix.arch }}-packages
           path: bin/packages/${{ matrix.arch }}/action/*.apk
 
+      - name: Rename APK
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cp bin/packages/${{ matrix.arch }}/action/luci-app-connected_*.apk \
+             bin/packages/${{ matrix.arch }}/action/luci-app-connected.apk
+
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: "luci-app-connected ${{ env.PKG_VERSION }}-${{ env.PKG_RELEASE }}"
-          files: bin/packages/${{ matrix.arch }}/action/*.apk
+          files: bin/packages/${{ matrix.arch }}/action/luci-app-connected.apk
