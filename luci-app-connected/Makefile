@@ -1,40 +1,21 @@
+# Copyright 2026 Bruno Marinier (bmgm41@gmail.com)
+# This is free software, licensed under the GNU General Public License v2.
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-connected
 PKG_VERSION:=2.0.0
 PKG_RELEASE:=1
-PKG_LICENSE:=MIT
-PKG_MAINTAINER:=
 
-LUCI_PACKAGE:=luci-app-connected
-LUCI_TITLE:=Connected Devices Viewer
+PKG_MAINTAINER:=Bruno Marinier <bmgm41@gmail.com>
+PKG_LICENSE:=Apache-2.0
+
+LUCI_TITLE:=LuCI Status Page for Connected devices
+LUCI_DESCRIPTION:=Status page for viewing information about connected devices
 LUCI_DEPENDS:=+luci-base +rpcd +ucode +ucode-mod-resolv
-LUCI_PKGARCH:=all
 
-include $(TOPDIR)/feeds/luci/luci.mk
 
-define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/share/rpcd/ucode
-	$(INSTALL_DATA) ./root/usr/share/rpcd/ucode/luci.connected \
-		$(1)/usr/share/rpcd/ucode/luci.connected
-
-	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
-	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-connected.json \
-		$(1)/usr/share/rpcd/acl.d/luci-app-connected.json
-
-	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
-	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-connected.json \
-		$(1)/usr/share/luci/menu.d/luci-app-connected.json
-
-	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/connected
-	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/connected/index.js \
-		$(1)/www/luci-static/resources/view/connected/index.js
-endef
-
-define Package/$(PKG_NAME)/postinst
-#!/bin/sh
-[ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd restart || true
-endef
+include $(TOPDIR)/feeds/luci/luci.mk # When source is linked into luci feed
+#include ../../luci.mk # When source is copied into luci feed
 
 # call BuildPackage - OpenWrt buildroot signature
-$(eval $(call BuildPackage,$(PKG_NAME)))
