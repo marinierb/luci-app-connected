@@ -47,5 +47,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          name: "${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
+          name: "v${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
           files: bin/packages/${{ matrix.arch }}/action/*.apk
