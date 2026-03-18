@@ -15,7 +15,6 @@ LUCI_DESCRIPTION:=Status page for viewing information about connected devices
 LUCI_DEPENDS:=+luci-base +rpcd +ucode +ucode-mod-resolv
 
 
-include $(TOPDIR)/feeds/luci/luci.mk # When source is linked into luci feed
-#include ../../luci.mk # When source is copied into luci feed
+include ../../luci.mk # When source is copied into luci feed
 
 # call BuildPackage - OpenWrt buildroot signature

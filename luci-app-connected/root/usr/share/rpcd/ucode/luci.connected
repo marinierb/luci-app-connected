@@ -17,7 +17,7 @@ return {
 		get_neighbours: {
 			args: {},
 			call: function(request) {
-				let fd = popen('ip -4 neigh show');
+				let fd = popen('ip -4 n');
 				let out = fd ? fd.read('all') : '';
 				if (fd) fd.close();
 
