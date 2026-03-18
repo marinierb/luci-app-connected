@@ -2,17 +2,18 @@
     "options": {
         "env": {
             "RSYNC_CMD":     "rsync -avz --progress",
-            "HTDOCS_SRC":    "${workspaceFolder}/htdocs/luci-static/resources/view/connected/index.js",
-            "HTDOCS_DST":    "root@192.168.1.1:/www/luci-static/resources/view/connected/index.js",
+            "HTDOCS_SOURCE": "${workspaceFolder}/htdocs/",
+            "HTDOCS_ROUTER": "root@192.168.1.1:/www/",
+            "HTDOCS_REPO":   "/home//",
             "ROOT_SRC":      "${workspaceFolder}/root/",
             "ROOT_DST":      "root@192.168.1.1:/",
-            "OPEN_INCOG":    "brave --incognito http://192.168.1.1/cgi-bin/luci/admin/status/connected",
-            "OPEN_NORMAL":   "brave http://192.168.1.1/cgi-bin/luci/admin/status/connected",
             "BUILD_DIR":     "/home/bruno/openwrt",
             "BUILD_CMD":     "make -j16 package/luci-app-connected/{clean,compile} V=sc",
             "BUILD_CHK":     "ls -l /home/bruno/openwrt/bin/packages/aarch64_cortex-a53/luci/luci-app-connected-*.apk",
             "APK_COPY_CMD":  "rsync -av --progress /home/bruno/openwrt/bin/packages/aarch64_cortex-a53/luci/luci-app-connected-*.apk root@router:/root/",
-            "APK_INST_CMD":  "ssh root@router apk add --allow-untrusted luci-app-connected-*.apk"
+            "APK_INST_CMD":  "ssh root@router apk add --allow-untrusted luci-app-connected-*.apk",
+            "OPEN_INCOG":    "brave --incognito http://192.168.1.1/cgi-bin/luci/admin/status/connected",
+            "OPEN_NORMAL":   "brave http://192.168.1.1/cgi-bin/luci/admin/status/connected",
         }
     },
     "tasks": [
