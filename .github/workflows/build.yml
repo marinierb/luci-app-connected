@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -57,27 +59,32 @@ jobs:
       - name: Deploy to GitHub Pages
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          # Clone gh-pages branch or create it
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          # Create temporary directory for new files
-          mkdir -p /tmp/repo/${{ matrix.arch }}
-          cp bin/packages/${{ matrix.arch }}/action/*.apk /tmp/repo/${{ matrix.arch }}/
+          # Copy APK files to temp location before switching branches
+          mkdir -p /tmp/${{ matrix.arch }}
+          cp bin/packages/${{ matrix.arch }}/action/*.apk /tmp/${{ matrix.arch }}/
 
-          # Clone or checkout gh-pages
-          git fetch origin gh-pages 2>/dev/null || echo "gh-pages branch doesn't exist yet"
-          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          # Reset and create/checkout gh-pages branch
+          git reset --hard
+          git clean -fd
 
-          # Copy files
-          mkdir -p ${{ matrix.arch }}
-          cp -r /tmp/repo/${{ matrix.arch }}/* ${{ matrix.arch }}/
-
-          # Commit and push
-          git add ${{ matrix.arch }}/
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
+          # Create or checkout gh-pages
+          if git rev-parse --verify origin/gh-pages > /dev/null 2>&1; then
+            # Branch exists on remote, checkout it
+            git checkout gh-pages
+            git pull origin gh-pages
           else
-            git commit -m "Update packages for ${{ matrix.arch }} - $(date +%Y-%m-%d)"
-            git push origin gh-pages
+            # Branch doesn't exist, create orphan
+            git checkout --orphan gh-pages
+            git rm -rf . || true
           fi
+
+          # Copy APK files
+          mkdir -p ${{ matrix.arch }}
+          cp /tmp/${{ matrix.arch }}/*.apk ${{ matrix.arch }}/
+
+          # Add and commit
+          git add ${{ matrix.arch }}/
+          git commit -m "Update packages for ${{ matrix.arch }} - $(date +%Y-%m-%d)" && git push -u origin gh-pages || echo "Nothing to push"
