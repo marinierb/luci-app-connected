@@ -56,9 +56,11 @@ jobs:
 
       - name: Generate APK repo index
         run: |
+          # Install apk-tools if not available
+          which apk || sudo apt-get update && sudo apt-get install -y apk-tools
+
           cd bin/packages/${{ matrix.arch }}/action
           apk index -o APKINDEX.tar.gz *.apk
-          adbgen APKINDEX.tar.gz > packages.adb
 
       - name: Store packages
         uses: actions/upload-artifact@v4
