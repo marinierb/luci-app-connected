@@ -54,12 +54,31 @@ jobs:
           name: "v${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
           files: bin/packages/${{ matrix.arch }}/action/*.apk
 
+      - name: Debug - List files
+        run: |
+          echo "Checking for APK files..."
+          find bin -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+          echo "---"
+          find . -name "APKINDEX*" -type f 2>/dev/null || echo "No APKINDEX files found"
+          echo "---"
+          ls -la bin/packages/${{ matrix.arch }}/action/ 2>/dev/null || echo "Directory doesn't exist"
+
       - name: Generate APK repo index
         run: |
+          # Find the actual location of APK files
+          APK_DIR=$(find bin -name "*.apk" -type f | head -1 | xargs dirname 2>/dev/null)
+          if [ -z "$APK_DIR" ]; then
+            echo "ERROR: No APK files found!"
+            exit 1
+          fi
+
+          echo "Found APK files in: $APK_DIR"
+          ls -la "$APK_DIR"
+
           docker run --rm \
-            -v ${{ github.workspace }}/bin/packages/${{ matrix.arch }}/action:/packages \
+            -v "$APK_DIR":/packages \
             alpine:latest \
-            sh -c "cd /packages && apk index --allow-untrusted -o APKINDEX.tar.gz *.apk"
+            sh -c "cd /packages && apk index --allow-untrusted -o APKINDEX.tar.gz *.apk && ls -la"
 
       - name: Store packages
         uses: actions/upload-artifact@v4
