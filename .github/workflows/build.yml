@@ -33,7 +33,7 @@ jobs:
       - name: Build
         uses: openwrt/gh-action-sdk@v7
         env:
-          ARCH: mediatek/filogic
+          ARCH: ${{ matrix.arch }}
           PACKAGES: luci-app-connected
           V: s
 
@@ -41,18 +41,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.arch }}-packages
-          path: bin/packages/aarch64_cortex-a53/action/*.apk
+          path: bin/packages/${{ matrix.arch }}/action/*.apk
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: "v${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
-          files: bin/packages/aarch64_cortex-a53/action/*.apk
+          files: bin/packages/${{ matrix.arch }}/action/*.apk
 
       - name: Generate APK repo index
         run: |
-          cd bin/packages/aarch64_cortex-a53/action
+          cd bin/packages/${{ matrix.arch }}/action
           apk index -o APKINDEX.tar.gz *.apk
           adbgen APKINDEX.tar.gz > packages.adb
 
@@ -61,6 +61,6 @@ jobs:
         with:
           name: ${{ matrix.arch }}-packages
           path: |
-            bin/packages/aarch64_cortex-a53/action/*.apk
-            bin/packages/aarch64_cortex-a53/action/APKINDEX.tar.gz
-            bin/packages/aarch64_cortex-a53/action/packages.adb
+            bin/packages/${{ matrix.arch }}/action/*.apk
+            bin/packages/${{ matrix.arch }}/action/APKINDEX.tar.gz
+            bin/packages/${{ matrix.arch }}/action/packages.adb
