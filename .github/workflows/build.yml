@@ -30,10 +30,16 @@ jobs:
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
 
+      - name: Convert Architecture for SDK
+        run: |
+          # Convert mediatek/filogic to a valid Docker tag format
+          SDK_ARCH=$(echo "${{ matrix.arch }}" | tr '/' '-')
+          echo "SDK_ARCH=$SDK_ARCH" >> $GITHUB_ENV
+
       - name: Build
         uses: openwrt/gh-action-sdk@v7
         env:
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ env.SDK_ARCH }}
           PACKAGES: luci-app-connected
           V: s
 
