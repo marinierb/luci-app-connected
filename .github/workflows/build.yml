@@ -3,13 +3,8 @@ name: Build Package
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
   workflow_dispatch:
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
 
 jobs:
   build:
@@ -55,36 +50,3 @@ jobs:
         with:
           name: "v${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
           files: bin/packages/${{ matrix.arch }}/action/*.apk
-
-      - name: Deploy to GitHub Pages
-        #if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-          # Copy APK files to temp location before switching branches
-          mkdir -p /tmp/${{ matrix.arch }}
-          cp bin/packages/${{ matrix.arch }}/action/*.apk /tmp/${{ matrix.arch }}/
-
-          # Reset and create/checkout gh-pages branch
-          git reset --hard
-          git clean -fd
-
-          # Create or checkout gh-pages
-          if git rev-parse --verify origin/gh-pages > /dev/null 2>&1; then
-            # Branch exists on remote, checkout it
-            git checkout gh-pages
-            git pull origin gh-pages
-          else
-            # Branch doesn't exist, create orphan
-            git checkout --orphan gh-pages
-            git rm -rf . || true
-          fi
-
-          # Copy APK files
-          mkdir -p ${{ matrix.arch }}
-          cp /tmp/${{ matrix.arch }}/*.apk ${{ matrix.arch }}/
-
-          # Add and commit
-          git add ${{ matrix.arch }}/
-          git commit -m "Update packages for ${{ matrix.arch }} - $(date +%Y-%m-%d)" && git push -u origin gh-pages || echo "Nothing to push"
