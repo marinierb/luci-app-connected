@@ -1,6 +1,6 @@
 # luci-app-connected
 
-#### For OpenWrt 25.12 only!
+#### For OpenWrt 25.12
 
 View list of connected devices on OpenWrt using **ip -4 neigh** (so IPv4 only!)
 
