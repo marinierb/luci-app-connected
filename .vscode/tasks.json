@@ -4,23 +4,18 @@
             "RSYNC_CMD":     "rsync -avz --progress",
             "HTDOCS_SOURCE": "${workspaceFolder}/htdocs/",
             "HTDOCS_ROUTER": "root@192.168.1.1:/www/",
-            "HTDOCS_REPO":   "/home//",
-            "ROOT_SRC":      "${workspaceFolder}/root/",
-            "ROOT_DST":      "root@192.168.1.1:/",
-            "BUILD_DIR":     "/home/bruno/openwrt",
-            "BUILD_CMD":     "make -j16 package/luci-app-connected/{clean,compile} V=sc",
-            "BUILD_CHK":     "ls -l /home/bruno/openwrt/bin/packages/aarch64_cortex-a53/luci/luci-app-connected-*.apk",
-            "APK_COPY_CMD":  "rsync -av --progress /home/bruno/openwrt/bin/packages/aarch64_cortex-a53/luci/luci-app-connected-*.apk root@router:/root/",
-            "APK_INST_CMD":  "ssh root@router apk add --allow-untrusted luci-app-connected-*.apk",
+            "ROOT_SOURCE":   "${workspaceFolder}/root/",
+            "ROOT_ROUTER":   "root@192.168.1.1:/",
             "OPEN_INCOG":    "brave --incognito http://192.168.1.1/cgi-bin/luci/admin/status/connected",
             "OPEN_NORMAL":   "brave http://192.168.1.1/cgi-bin/luci/admin/status/connected",
+            "GITHUB_BUILD":      "gh workflow run build.yml",
         }
     },
     "tasks": [
         {
             "label" : "$(arrow-right) Push changes",
             "type": "shell",
-            "command": "$RSYNC_CMD $HTDOCS_SRC $HTDOCS_DST && $RSYNC_CMD $ROOT_SRC $ROOT_DST && $OPEN_INCOG",
+            "command": "$RSYNC_CMD $HTDOCS_SOURCE $HTDOCS_ROUTER && $RSYNC_CMD $ROOT_SOURCE $ROOT_ROUTER && $OPEN_INCOG",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
@@ -35,9 +30,9 @@
             }
         },
         {
-            "label" : "$(arrow-right) Build",
+            "label": "$(arrow-right) Build on GitHub",
             "type": "shell",
-            "command": "cd $BUILD_DIR && $BUILD_CMD",
+            "command": "$GITHUB_BUILD",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
@@ -45,56 +40,9 @@
                 "focus": false,
                 "panel": "shared"
             },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
-            }
-        },
-        {
-            "label" : "$(arrow-right) Check",
-            "type": "shell",
-            "command": "$BUILD_CHK",
-            "problemMatcher": [],
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
-            }
-        },
-        {
-            "label" : "$(arrow-right) Install",
-            "type": "shell",
-            "command": "$APK_COPY_CMD && $APK_INST_CMD && $OPEN_NORMAL",
-            "problemMatcher": [],
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
-            }
-        },
-        {
-            "label": "$(arrow-right) Create and Push Tag",
-            "type": "shell",
-            "command": "TAG=$(grep -E '^(PKG_VERSION|PKG_RELEASE)' luci-app-connected/Makefile | grep -v 'PKG_RELEASE:=1$' | cut -d'=' -f2 | tr -d ' ' | tr '\n' '-') && TAG=v${TAG%-} && git tag $TAG && git push origin $TAG",
-            "problemMatcher": [],
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
+            "group": {
+                "kind": "build",
+                "isDefault": true
             },
             "options": {
                 "statusbar": {
