@@ -33,7 +33,7 @@ jobs:
           ARCH: ${{ env.PKG_ARCH }}
           PACKAGES: ${{ env.PKG_NAME }}
           IGNORE_ERRORS: 1
-          NO_DEFAULT_FEEDS: 1
+          #NO_DEFAULT_FEEDS: 1
           #INDEX: 1
           #V: s
 
