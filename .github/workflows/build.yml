@@ -1,19 +1,18 @@
 name: Build Package
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
-permissions:
+env:
+  PKG_NAME: luci-app-connected
+
+  permissions:
   contents: write
   pages: write
   id-token: write
 
 jobs:
   build:
-    name: ${{ matrix.arch }} build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,13 +21,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Get Package Version
         run: |
-          PKG_VERSION=$(grep '^PKG_VERSION' luci-app-connected/Makefile | cut -d= -f2 | tr -d ' ')
-          PKG_RELEASE=$(grep '^PKG_RELEASE' luci-app-connected/Makefile | cut -d= -f2 | tr -d ' ')
+          PKG_VERSION=$(grep '^PKG_VERSION' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
+          PKG_RELEASE=$(grep '^PKG_RELEASE' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
 
@@ -40,8 +37,11 @@ jobs:
         uses: openwrt/gh-action-sdk@v7
         env:
           ARCH: ${{ env.SDK_ARCH }}
-          PACKAGES: luci-app-connected
-          V: s
+          PACKAGES: ${{ env.PKG_NAME }}
+          IGNORE_ERRORS: 1
+          NO_DEFAULT_FEEDS: 1
+          #INDEX: 1
+          #V: s
 
       - name: Store packages
         uses: actions/upload-artifact@v4
@@ -50,7 +50,6 @@ jobs:
           path: bin/packages/${{ matrix.arch }}/action/*.apk
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: "v${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
