@@ -1,24 +1,17 @@
-name: Build Package
+name: Build and Deploy
 
 on:
   workflow_dispatch:
 
 env:
   PKG_NAME: luci-app-connected
-
-  permissions:
-  contents: write
-  pages: write
-  id-token: write
+  PKG_ARCH: aarch64_cortex-a53
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch:
-          - aarch64_cortex-a53
-
+    permissions:
+      contents: write   # to create releases and upload artifacts
     steps:
       - uses: actions/checkout@v4
 
@@ -28,15 +21,16 @@ jobs:
           PKG_RELEASE=$(grep '^PKG_RELEASE' ${{ env.PKG_NAME }}/Makefile | cut -d= -f2 | tr -d ' ')
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_RELEASE=$PKG_RELEASE" >> $GITHUB_ENV
+          echo "PKG_TAG=$PKG_VERSION$([ $PKG_RELEASE != 1 ] && echo -$PKG_RELEASE || echo)" >> $GITHUB_ENV
 
       - name: Set SDK Architecture
         run: |
-          echo "SDK_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV
+          echo "SDK_ARCH=${{ env.PKG_ARCH }}" >> $GITHUB_ENV
 
       - name: Build
-        uses: openwrt/gh-action-sdk@v7
+        uses: openwrt/gh-action-sdk@main
         env:
-          ARCH: ${{ env.SDK_ARCH }}
+          ARCH: ${{ env.PKG_ARCH }}
           PACKAGES: ${{ env.PKG_NAME }}
           IGNORE_ERRORS: 1
           NO_DEFAULT_FEEDS: 1
@@ -46,11 +40,57 @@ jobs:
       - name: Store packages
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.arch }}-packages
-          path: bin/packages/${{ matrix.arch }}/action/*.apk
+          name: packages
+          path: bin/packages/${{ env.PKG_ARCH }}/action/*.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "v${{ env.PKG_VERSION }}${{ env.PKG_RELEASE != '1' && format('-{0}', env.PKG_RELEASE) || '' }}"
-          files: bin/packages/${{ matrix.arch }}/action/*.apk
+          tag_name: ${{ env.PKG_TAG }}
+          name: "${{ env.PKG_TAG }}"
+          files: bin/packages/${{ env.PKG_ARCH }}/action/*.apk
+
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download built packages
+        uses: actions/download-artifact@v4
+        with:
+          name: "packages"
+          path: dist/
+
+      - name: Rename apk file
+        run: |
+          cd dist
+          for f in *.apk; do
+            newname=$(echo "$f" | sed 's/-[0-9][^-]*\(-r[0-9]*\)\?\.apk$/.apk/' | sed 's/~[^.]*\.apk$/.apk/')
+            [[ "$f" != "$newname" ]] && mv -- "$f" "$newname"
+          done
+
+      - name: Create index.html
+        run: |
+          echo '<html><head><title>${{ env.PKG_NAME }}</title></head><body><h2>${{ env.PKG_NAME }}</h2><ul>' > dist/index.html
+          for f in dist/*; do
+            name=$(basename "$f")
+            if [ "$name" = "index.html" ]; then
+              continue
+            fi
+            echo "<li><a href=\"$name\">$name</a></li>" >> dist/index.html
+          done
+          echo '</ul></body></html>' >> dist/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
