@@ -6,7 +6,7 @@
             "HTDOCS_ROUTER": "root@192.168.1.1:/www/",
             "ROOT_SOURCE":   "${workspaceFolder}/luci-app-connected/root/",
             "ROOT_ROUTER":   "root@192.168.1.1:/",
-            "LUCI_RESTART":  "ssh root@192.168.1.1 service uhttpd restart",
+            "RPCD_RESTART":  "ssh root@192.168.1.1 service rpcd restart",
             "OPEN_INCOG":    "brave --incognito http://192.168.1.1/cgi-bin/luci/admin/status/connected",
             "OPEN_NORMAL":   "brave http://192.168.1.1/cgi-bin/luci/admin/status/connected",
             "GITHUB_BUILD":  "gh workflow run build.yml",
@@ -23,7 +23,7 @@
         {
             "label" : "$(arrow-right) Copy to router",
             "type": "shell",
-            "command": "$RSYNC_CMD $HTDOCS_SOURCE $HTDOCS_ROUTER && $RSYNC_CMD $ROOT_SOURCE $ROOT_ROUTER && $LUCI_RESTART && $OPEN_INCOG",
+            "command": "$RSYNC_CMD $HTDOCS_SOURCE $HTDOCS_ROUTER && $RSYNC_CMD $ROOT_SOURCE $ROOT_ROUTER && $RPCD_RESTART && $OPEN_INCOG",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
