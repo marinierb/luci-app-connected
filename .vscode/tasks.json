@@ -2,20 +2,28 @@
     "options": {
         "env": {
             "RSYNC_CMD":     "rsync -avz --progress",
-            "HTDOCS_SOURCE": "${workspaceFolder}/htdocs/",
+            "HTDOCS_SOURCE": "${workspaceFolder}/luci-app-connected/htdocs/",
             "HTDOCS_ROUTER": "root@192.168.1.1:/www/",
-            "ROOT_SOURCE":   "${workspaceFolder}/root/",
+            "ROOT_SOURCE":   "${workspaceFolder}/luci-app-connected/root/",
             "ROOT_ROUTER":   "root@192.168.1.1:/",
+            "LUCI_RESTART":  "ssh root@192.168.1.1 service uhttpd restart",
             "OPEN_INCOG":    "brave --incognito http://192.168.1.1/cgi-bin/luci/admin/status/connected",
             "OPEN_NORMAL":   "brave http://192.168.1.1/cgi-bin/luci/admin/status/connected",
-            "GITHUB_BUILD":      "gh workflow run build.yml",
+            "GITHUB_BUILD":  "gh workflow run build.yml",
+            "MAKE_SRC":      "${workspaceFolder}/luci-app-connected",
+            "MAKE_DST":      "/home/bruno/OpenWrt/luci/applications",
+            "MAKE_DIR":      "/home/bruno/OpenWrt/openwrt",
+            "MAKE":          "make package/luci-app-connected/{clean,compile} V=s",
+            "MAKE_CHECK":    "ls -ltr bin/packages/aarch64_cortex-a53/luci/luci-app-connected-*.apk",
+            "MAKE_COPY":     "rsync -av /home/bruno/OpenWrt/openwrt/bin/packages/aarch64_cortex-a53/luci/luci-app-connected-* root@router:/mnt/sda1/",
+            "MAKE_INSTALL":  "ssh root@router apk add --allow-untrusted /mnt/sda1/luci-app-connected-*.apk"
         }
     },
     "tasks": [
         {
-            "label" : "$(arrow-right) Push changes",
+            "label" : "$(arrow-right) Copy to router",
             "type": "shell",
-            "command": "$RSYNC_CMD $HTDOCS_SOURCE $HTDOCS_ROUTER && $RSYNC_CMD $ROOT_SOURCE $ROOT_ROUTER && $OPEN_INCOG",
+            "command": "$RSYNC_CMD $HTDOCS_SOURCE $HTDOCS_ROUTER && $RSYNC_CMD $ROOT_SOURCE $ROOT_ROUTER && $LUCI_RESTART && $OPEN_INCOG",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
@@ -33,6 +41,44 @@
             "label": "$(arrow-right) Build on GitHub",
             "type": "shell",
             "command": "$GITHUB_BUILD",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "statusbar": {
+                    "color" : "#226dd6"
+                }
+            }
+        },
+        {
+            "label": "$(arrow-right) Make",
+            "type": "shell",
+            "command": "$RSYNC_CMD $MAKE_SRC $MAKE_DST && cd $MAKE_DIR && $MAKE && $MAKE_CHECK",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "statusbar": {
+                    "color" : "#226dd6"
+                }
+            }
+        },
+        {
+            "label": "$(arrow-right) Install",
+            "type": "shell",
+            "command": "$MAKE_COPY && $MAKE_INSTALL && $OPEN_INCOG",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
