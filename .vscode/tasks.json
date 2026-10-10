@@ -1,4 +1,5 @@
 {
+    "version": "2.0.0",
     "options": {
         "env": {
             "RSYNC_CMD":     "rsync -avz --progress",
@@ -30,11 +31,6 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
-            },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
             }
         },
         {
@@ -47,15 +43,6 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
             }
         },
         {
@@ -68,11 +55,6 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
-            },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
             }
         },
         {
@@ -85,15 +67,6 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "options": {
-                "statusbar": {
-                    "color" : "#226dd6"
-                }
             }
         }
     ]
